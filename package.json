@@ -16,7 +16,8 @@
     "clean": "if exist dist rmdir /s /q dist",
     "prebuild": "npm run clean",
     "test": "node --test",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "start:mcp": "node --watch dist/server.js"
   },
   "keywords": [
     "task-management",
