@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * MCP (Model Context Protocol) Server for Task Status Checker
  * 
@@ -509,12 +510,40 @@ class MCPStdioServer {
 // Determine if we should run as MCP stdio server or HTTP server
 const isMCPMode = process.argv.includes('--mcp') || process.env.MCP_MODE === 'true' || !process.stdout.isTTY;
 
-if (isMCPMode) {
+// Handle CLI arguments
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  console.log(`
+Task Status Checker MCP Server
+
+Usage:
+  task-status-checker [options]
+
+Options:
+  --mcp         Run as MCP stdio server (default when piped)
+  --http        Force HTTP server mode
+  --port <port> HTTP server port (default: 3000)
+  --help, -h    Show this help message
+
+Examples:
+  task-status-checker --mcp     # MCP stdio mode
+  task-status-checker --http    # HTTP server mode
+  task-status-checker --port 8080 --http  # HTTP on port 8080
+`);
+  process.exit(0);
+}
+
+// Force HTTP mode if --http is specified
+const forceHTTP = process.argv.includes('--http');
+
+if (isMCPMode && !forceHTTP) {
   // Run as MCP stdio server
   new MCPStdioServer();
 } else {
-  // Run as HTTP server (original behavior)
-  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : DEFAULT_PORT;
+  // Run as HTTP server
+  const portArg = process.argv.indexOf('--port');
+  const port = portArg !== -1 && process.argv[portArg + 1] 
+    ? parseInt(process.argv[portArg + 1], 10)
+    : (process.env.PORT ? parseInt(process.env.PORT, 10) : DEFAULT_PORT);
   startServer(port);
 }
 

@@ -1,10 +1,13 @@
 {
   "name": "task-status-checker",
-  "version": "1.2.0",
+  "version": "1.2.3",
   "description": "A zero-dependency NPM package for managing task status in the Alfredo ecosystem",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "task-status-checker": "./dist/server.js"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",
