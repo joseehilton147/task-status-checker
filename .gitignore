@@ -1,0 +1,34 @@
+# Dependencies
+/node_modules
+
+# Build output
+/dist
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test coverage
+coverage/
+
+# IA Related
+.alfredo
+.claude
+.kiro
+CLAUDE.md
+
+# MCP Configuration (contains sensitive tokens)
+.mcp.json

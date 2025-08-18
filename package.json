@@ -1,0 +1,41 @@
+{
+  "name": "task-status-checker",
+  "version": "1.0.0",
+  "description": "A zero-dependency NPM package for managing task status in the Alfredo ecosystem",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "if exist dist rmdir /s /q dist",
+    "prebuild": "npm run clean",
+    "test": "node --test",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "task-management",
+    "status-checker",
+    "alfredo",
+    "typescript",
+    "esm"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md"
+  ],
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "typescript": "^5.9.2"
+  }
+}
