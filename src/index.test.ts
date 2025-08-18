@@ -737,12 +737,14 @@ describe('update', () => {
     // Create a task first
     const taskId = await create(owner, initialDetails);
     
-    // Update with empty details (should be allowed)
-    await update(taskId, 'completed', '');
-    
-    const updatedTask = await getStatus(taskId);
-    assert.strictEqual(updatedTask.status, 'completed');
-    assert.strictEqual(updatedTask.details, '');
+    // Update with empty details (should now throw error for consistency with create)
+    await assert.rejects(
+      async () => await update(taskId, 'completed', ''),
+      {
+        name: 'Error',
+        message: 'Details parameter is required and must be a non-empty string'
+      }
+    );
     
     await cleanupTestFiles();
   });

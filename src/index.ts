@@ -399,15 +399,38 @@ export async function update(task_id: string, new_status: TaskStatus['status'], 
   const trimmedTaskId = task_id.trim();
   const trimmedDetails = new_details.trim();
 
+  // Validate new_details consistency with create function - cannot be empty or whitespace-only
+  if (trimmedDetails.length === 0) {
+    throw new Error('Details parameter is required and must be a non-empty string');
+  }
+
   // Validate status against allowed values union type
   const validStatuses: TaskStatus['status'][] = ['running', 'completed', 'failed', 'blocked'];
   if (!validStatuses.includes(new_status)) {
     throw new InvalidStatusError(new_status);
   }
 
+  const filePath = getTaskFilePath(trimmedTaskId);
+
   try {
-    // First, retrieve the existing task to validate it exists and get current data
-    const existingTask = await getStatus(trimmedTaskId);
+    // Check if file exists before attempting to read
+    const exists = await fileExists(filePath);
+    if (!exists) {
+      throw new TaskNotFoundError(trimmedTaskId);
+    }
+
+    // Read and parse JSON file directly (avoiding internal getStatus call)
+    const fileContent = await fs.readFile(filePath, 'utf8');
+    
+    let existingTask: any;
+    try {
+      existingTask = JSON.parse(fileContent);
+    } catch (parseError) {
+      throw new Error(`Failed to parse task data for ID '${trimmedTaskId}': ${parseError instanceof Error ? parseError.message : 'Invalid JSON'}`);
+    }
+
+    // Validate the existing data conforms to TaskStatus interface
+    validateTaskStatus(existingTask);
 
     // Create updated task object, preserving existing fields while updating specified ones
     const updatedTask: TaskStatus = {
@@ -417,9 +440,6 @@ export async function update(task_id: string, new_status: TaskStatus['status'], 
       started_at: existingTask.started_at, // Preserve original creation timestamp
       updated_at: new Date().toISOString() // Refresh updated_at timestamp using ISO 8601 format
     };
-
-    // Get the file path for this task
-    const filePath = getTaskFilePath(trimmedTaskId);
 
     // Perform atomic write operation by writing to JSON file
     await fs.writeFile(filePath, JSON.stringify(updatedTask, null, 2), 'utf8');
