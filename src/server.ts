@@ -14,6 +14,11 @@
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { parse as parseUrl } from 'node:url';
 import { create, getStatus, update, TaskNotFoundError, InvalidStatusError } from './index.js';
+import { 
+  initializeFocusChain, 
+  addFocusCheckpoint, 
+  getFocusStatus 
+} from './focus-chain.js';
 
 /**
  * Default port for the MCP server
@@ -431,6 +436,65 @@ class MCPStdioServer {
                 },
                 required: ['taskId', 'newStatus', 'newDetails']
               }
+            },
+            {
+              name: 'create_task_with_focus',
+              description: 'Create a task with focus chain to prevent context poisoning',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  owner: {
+                    type: 'string',
+                    description: 'The owner/creator of the task'
+                  },
+                  details: {
+                    type: 'string',
+                    description: 'Description of the task'
+                  },
+                  objective: {
+                    type: 'string',
+                    description: 'Original objective to maintain focus'
+                  }
+                },
+                required: ['owner', 'details', 'objective']
+              }
+            },
+            {
+              name: 'update_task_with_focus',
+              description: 'Update task and check for focus reinject',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  taskId: {
+                    type: 'string',
+                    description: 'The unique identifier of the task'
+                  },
+                  newStatus: {
+                    type: 'string',
+                    enum: ['running', 'completed', 'failed', 'blocked'],
+                    description: 'The new status for the task'
+                  },
+                  newDetails: {
+                    type: 'string',
+                    description: 'Updated description of the task'
+                  }
+                },
+                required: ['taskId', 'newStatus', 'newDetails']
+              }
+            },
+            {
+              name: 'get_focus_status',
+              description: 'Get focus chain status and checkpoint info',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  taskId: {
+                    type: 'string',
+                    description: 'The unique identifier of the task'
+                  }
+                },
+                required: ['taskId']
+              }
             }
           ]
         });
@@ -456,6 +520,34 @@ class MCPStdioServer {
             case 'update_task':
               await update(args.taskId, args.newStatus, args.newDetails);
               result = { success: true };
+              break;
+              
+            case 'create_task_with_focus':
+              const focusTaskId = await create(args.owner, args.details);
+              await initializeFocusChain(focusTaskId, args.objective);
+              result = { 
+                taskId: focusTaskId,
+                focusChainInitialized: true,
+                objective: args.objective
+              };
+              break;
+              
+            case 'update_task_with_focus':
+              await update(args.taskId, args.newStatus, args.newDetails);
+              const focusReinject = await addFocusCheckpoint(
+                args.taskId, 
+                args.newDetails, 
+                args.newStatus
+              );
+              result = { 
+                success: true,
+                focusReinject: focusReinject || null
+              };
+              break;
+              
+            case 'get_focus_status':
+              const focusStatus = await getFocusStatus(args.taskId);
+              result = focusStatus || { error: 'No focus chain found for this task' };
               break;
               
             default:
